@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ALB for two EC2
+
+Parameters:
+  NameforALB:
+    Type: String
+    Default: cfn
+
+Resources:
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${NameforALB}-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets: 
+       - !ImportValue PublicSubnet1
+       - !ImportValue PublicSubnet2
+      SecurityGroups: 
+       - !ImportValue ALBSecurityGroup
+      IpAddressType: ipv4
+      LoadBalancerAttributes: 
+       - 
+        Key: idle_timeout.timeout_seconds
+        Value: 30
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions: 
+       - 
+        TargetGroupArn: !Ref ALBTargetGroup
+        Type: forward
+      
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      Port: 80
+      Protocol: HTTP
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 2
+      TargetType: instance
+      Matcher: 
+        HttpCode: "200"
+      HealthyThresholdCount: 5
+      VpcId: !ImportValue cfnVPC
+      Name: !Sub tg-2-ec2-${NameforALB}
+      HealthCheckEnabled: true
+      Targets: 
+       - 
+        Id: !ImportValue EC2Instance1
+        Port: 80
+       - 
+        Id: !ImportValue EC2Instance2
+        Port: 80
+        

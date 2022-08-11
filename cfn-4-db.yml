@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DB-MySQL
+
+Parameters:
+  ProjectNameforDB:
+    Type: String
+    Default: cfn
+  DBpassword:
+    Type: String
+    Description: Database password
+    NoEcho: "true"
+
+Resources: 
+  RdsDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      AllowMajorVersionUpgrade: false
+      AutoMinorVersionUpgrade: true
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      BackupRetentionPeriod: 3
+      DBInstanceIdentifier: !Sub ${ProjectNameforDB}-db
+      DBSubnetGroupName: !Ref RdsDBSubnetGroup
+      Engine: mysql
+      EngineVersion: 8.0.28
+      MasterUsername: root
+      MasterUserPassword: 
+        Ref: DBpassword
+      MultiAZ: false
+      Port: 3306
+      PubliclyAccessible: false
+      StorageEncrypted: true
+      StorageType: gp2
+      VPCSecurityGroups:
+        - !ImportValue PrivateSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectNameforDB}-db
+
+  RdsDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub RDS-DB-SubnetGroup-${ProjectNameforDB}
+      SubnetIds:
+        - !ImportValue PublicSubnet1
+        - !ImportValue PublicSubnet2
+        - !ImportValue PrivateSubnet1
+        - !ImportValue PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectNameforDB}-rds-db-subnetG
+          
