@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: s3-private
+
+Parameters:
+  NameforBucket:
+    Type: String
+    Default: cfn
+
+Resources: 
+  s3Bucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private 
+      BucketName: !Sub raisetech-${NameforBucket}-s3
+      Tags:
+        - Key: Name
+          Value: !Sub ${NameforBucket}-s3

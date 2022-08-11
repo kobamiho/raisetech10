@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Security groups for pubilic subnets, private subnets and ALB.
+
+Parameters:
+  NameforSubnets:
+    Type: String
+    Default: cfn
+
+Resources:
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub public-sg-${NameforSubnets}
+      GroupDescription: !Sub public-security-group-${NameforSubnets}
+      VpcId: !ImportValue cfnVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub public-sg-${NameforSubnets}
+
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub private-sg-${NameforSubnets}
+      GroupDescription: !Sub private-security-group-${NameforSubnets}
+      VpcId: !ImportValue cfnVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref PublicSecurityGroup
+          IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+      Tags:
+        - Key: Name
+          Value: !Sub private-sg-${NameforSubnets}
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub alb-sg-${NameforSubnets}
+      GroupDescription: !Sub alb-security-group-${NameforSubnets}
+      VpcId: !ImportValue cfnVPC
+      SecurityGroupIngress: 
+       - 
+        CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      Tags:
+       - Key: Name
+         Value: !Sub alb-sg-${NameforSubnets}
+
+Outputs:
+  PublicSecurityGroup:
+    Value: !Ref PublicSecurityGroup
+    Export:
+      Name: PublicSecurityGroup
+
+  PrivateSecurityGroup:
+    Value: !Ref PrivateSecurityGroup
+    Export:
+      Name: PrivateSecurityGroup
+
+  ALBSecurityGroup:
+    Value: !Ref ALBSecurityGroup
+    Export:
+      Name: ALBSecurityGroup
+      
